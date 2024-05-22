@@ -127,7 +127,7 @@ __device__ __forceinline__ uint32_t fast_mod(uint32_t a, uint4 d)
 	return a - q * d.w;
 }
 
-__global__ void kawpow_calculate_dag_item(uint32_t start, hash64_t *g_dag, uint64_t dag_bytes, hash64_t* g_light, uint4 light_words)
+__global__ void meowpow_calculate_dag_item(uint32_t start, hash64_t *g_dag, uint64_t dag_bytes, hash64_t* g_light, uint4 light_words)
 {
 	uint64_t const node_index = start + uint64_t(blockIdx.x) * blockDim.x + threadIdx.x;
 

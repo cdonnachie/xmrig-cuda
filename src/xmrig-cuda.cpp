@@ -308,6 +308,74 @@ bool kawPowStopHash(nvid_ctx *ctx)
 }
 
 
+bool meowPowHash(nvid_ctx *ctx, uint8_t* job_blob, uint64_t target, uint32_t *rescount, uint32_t *resnonce, uint32_t *skipped_hashes)
+{
+    using namespace xmrig_cuda;
+
+#   ifdef XMRIG_ALGO_MEOWPOW
+    resetError(ctx->device_id);
+
+    try {
+        switch (ctx->algorithm.id()) {
+        case Algorithm::MEOWPOW_MEWC:
+            MeowPow_Meowcoin::hash(ctx, job_blob, target, rescount, resnonce, skipped_hashes);
+            break;
+
+        default:
+            throw std::runtime_error(kUnsupportedAlgorithm);
+        }
+    }
+    catch (std::exception &ex) {
+        return saveError(ctx->device_id, ex);
+    }
+
+    return true;
+#   else
+    return saveError(ctx->device_id, kUnsupportedAlgorithm);
+#   endif
+}
+
+
+bool meowPowPrepare_v2(nvid_ctx *ctx, const void* cache, size_t cache_size, const void* dag_precalc, size_t dag_size, uint32_t height, const uint64_t* dag_sizes)
+{
+    using namespace xmrig_cuda;
+
+#   ifdef XMRIG_ALGO_MEOWPOW
+    resetError(ctx->device_id);
+
+    try {
+        meowpow_prepare(ctx, cache, cache_size, dag_precalc, dag_size, height, dag_sizes);
+    }
+    catch (std::exception &ex) {
+        return saveError(ctx->device_id, ex);
+    }
+
+    return true;
+#   else
+    return saveError(ctx->device_id, kUnsupportedAlgorithm);
+#   endif
+}
+
+
+bool meowPowStopHash(nvid_ctx *ctx)
+{
+    using namespace xmrig_cuda;
+
+#   ifdef XMRIG_ALGO_MEOWPOW
+    try {
+        meowpow_stop_hash(ctx);
+    }
+    catch (std::exception &ex) {
+        return saveError(ctx->device_id, ex);
+    }
+
+    return true;
+#   else
+    return saveError(ctx->device_id, kUnsupportedAlgorithm);
+#   endif
+}
+
+
 bool setJob(nvid_ctx *ctx, const void *data, size_t size, uint32_t algo)
 {
     using namespace xmrig_cuda;
@@ -487,7 +555,7 @@ uint64_t deviceUlong(nvid_ctx *ctx, DeviceProperty property)
 
 void init()
 {
-#   if defined(XMRIG_ALGO_KAWPOW) || defined(XMRIG_ALGO_CN_R)
+#   if defined(XMRIG_ALGO_KAWPOW) || defined(XMRIG_ALGO_MEOWPOW) || defined(XMRIG_ALGO_CN_R)
     cuInit(0);
 #   endif
 }
@@ -541,6 +609,20 @@ void release(nvid_ctx *ctx)
         cuDevicePrimaryCtxRelease(ctx->cuDevice);
     }
 #   endif
+
+#   ifdef WITH_MEOWPOW
+    cudaFree(ctx->meowpow_cache);
+    cudaFree(ctx->meowpow_dag);
+    cudaFreeHost(ctx->meowpow_stop_host);
+
+    cuModuleUnload(ctx->module);
+    cuModuleUnload(ctx->meowpow_module);
+
+    if (ctx->cuDevice != -1) {
+        cuDevicePrimaryCtxRelease(ctx->cuDevice);
+    }
+#   endif
+
 
     delete ctx;
 }

@@ -51,6 +51,9 @@ xmrig_cuda::Algorithm::Id xmrig_cuda::Algorithm::parse(uint32_t id)
 #       ifdef XMRIG_ALGO_KAWPOW
         KAWPOW_RVN,
 #       endif
+#       ifdef XMRIG_ALGO_MEOWPOW
+        MEOWPOW_MEWC,
+#       endif
     };
 
     return ids.count(id) ? static_cast<Id>(id) : INVALID;

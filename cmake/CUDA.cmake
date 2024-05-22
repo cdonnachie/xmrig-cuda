@@ -251,6 +251,16 @@ else()
     set(CUDA_KAWPOW_SOURCES "")
 endif()
 
+if (WITH_MEOWPOW AND WITH_DRIVER_API)
+    set(CUDA_MEOWPOW_SOURCES
+        src/MeowPow/meowcoin/CudaMeowPow_gen.cpp
+        src/MeowPow/meowcoin/CudaMeowPow_gen.h
+        src/MeowPow/meowcoin/MeowPow.cu
+    )
+else()
+    set(CUDA_MEOWPOW_SOURCES "")
+endif()
+
 set(CUDA_SOURCES
     src/cryptonight.h
     src/cuda_aes.hpp
@@ -266,6 +276,7 @@ set(CUDA_SOURCES
     src/cuda_skein.hpp
     ${CUDA_RANDOMX_SOURCES}
     ${CUDA_KAWPOW_SOURCES}
+    ${CUDA_MEOWPOW_SOURCES}
 )
 
 if("${CUDA_COMPILER}" STREQUAL "clang")

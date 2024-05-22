@@ -6,7 +6,7 @@
 #include <thread>
 
 
-#include "CudaKawPow_gen.h"
+#include "CudaMeowPow_gen.h"
 #include "cuda_device.hpp"
 
 
@@ -42,9 +42,9 @@ struct BackgroundTask : public BackgroundTaskBase
     T m_func;
 };
 
-static std::mutex KawPow_cache_mutex;
-static std::mutex KawPow_build_mutex;
-static std::vector<CacheEntry> KawPow_cache;
+static std::mutex MeowPow_cache_mutex;
+static std::mutex MeowPow_build_mutex;
+static std::vector<CacheEntry> MeowPow_cache;
 
 static std::mutex background_tasks_mutex;
 static std::vector<BackgroundTaskBase*> background_tasks;
@@ -94,7 +94,7 @@ static inline uint32_t clz(uint32_t a)
 }
 
 
-void KawPow_calculate_fast_mod_data(uint32_t divisor, uint32_t& reciprocal, uint32_t& increment, uint32_t& shift)
+void MeowPow_calculate_fast_mod_data(uint32_t divisor, uint32_t& reciprocal, uint32_t& increment, uint32_t& shift)
 {
     if ((divisor & (divisor - 1)) == 0) {
         reciprocal = 1;
@@ -120,7 +120,7 @@ void KawPow_calculate_fast_mod_data(uint32_t divisor, uint32_t& reciprocal, uint
 }
 
 
-static void KawPow_build_program(
+static void MeowPow_build_program(
     std::vector<char>& ptx,
     std::string& lowered_name,
     uint64_t period,
@@ -129,14 +129,14 @@ static void KawPow_build_program(
     std::string source)
 {
     {
-        std::lock_guard<std::mutex> g(KawPow_cache_mutex);
+        std::lock_guard<std::mutex> g(MeowPow_cache_mutex);
 
         // Remove old programs from cache
-        for (size_t i = 0; i < KawPow_cache.size();) {
-            const CacheEntry& entry = KawPow_cache[i];
+        for (size_t i = 0; i < MeowPow_cache.size();) {
+            const CacheEntry& entry = MeowPow_cache[i];
             if (entry.period + 2 < period) {
-                KawPow_cache[i] = std::move(KawPow_cache.back());
-                KawPow_cache.pop_back();
+                MeowPow_cache[i] = std::move(MeowPow_cache.back());
+                MeowPow_cache.pop_back();
             }
             else {
                 ++i;
@@ -147,12 +147,12 @@ static void KawPow_build_program(
     ptx.clear();
     ptx.reserve(65536);
 
-    std::lock_guard<std::mutex> g1(KawPow_build_mutex);
+    std::lock_guard<std::mutex> g1(MeowPow_build_mutex);
     {
-        std::lock_guard<std::mutex> g(KawPow_cache_mutex);
+        std::lock_guard<std::mutex> g(MeowPow_cache_mutex);
 
         // Check if the cache already has this program (some other thread might have added it first)
-        for (const CacheEntry& entry : KawPow_cache)
+        for (const CacheEntry& entry : MeowPow_cache)
         {
             if ((entry.period == period) && (entry.arch_major == arch_major) && (entry.arch_minor == arch_minor))
             {
@@ -164,7 +164,7 @@ static void KawPow_build_program(
     }
 
     nvrtcProgram prog;
-    nvrtcResult result = nvrtcCreateProgram(&prog, source.c_str(), "KawPow.cu", 0, nullptr, nullptr);
+    nvrtcResult result = nvrtcCreateProgram(&prog, source.c_str(), "MeowPow.cu", 0, nullptr, nullptr);
     if (result != NVRTC_SUCCESS) {
         CUDA_THROW(nvrtcGetErrorString(result));
     }
@@ -227,18 +227,19 @@ static void KawPow_build_program(
     nvrtcDestroyProgram(&prog);
 
     {
-        std::lock_guard<std::mutex> g(KawPow_cache_mutex);
-        KawPow_cache.emplace_back(period, arch_major, arch_minor, ptx, lowered_name);
+        std::lock_guard<std::mutex> g(MeowPow_cache_mutex);
+        MeowPow_cache.emplace_back(period, arch_major, arch_minor, ptx, lowered_name);
     }
 }
 
 #define PROGPOW_LANES           16
-#define PROGPOW_REGS            32
+#define PROGPOW_REGS            16
 #define PROGPOW_DAG_LOADS       4
 #define PROGPOW_CACHE_BYTES     (16*1024)
 #define PROGPOW_CNT_DAG         64
-#define PROGPOW_CNT_CACHE       11
-#define PROGPOW_CNT_MATH        18
+#define PROGPOW_CNT_CACHE       6
+#define PROGPOW_CNT_MATH        9
+#define MEOWPOW_DAG_CHANGE      110
 
 #define rnd()       (kiss99(rnd_state))
 #define mix_src()   ("mix[" + std::to_string(rnd() % PROGPOW_REGS) + "]")
@@ -402,17 +403,17 @@ static void get_code(uint64_t prog_seed, std::string& random_math, std::string& 
     dag_loads = ret.str();
 }
 
-void KawPow_get_program(std::vector<char>& ptx, std::string& lowered_name, uint64_t period, uint32_t threads, int arch_major, int arch_minor, const uint64_t* dag_sizes, bool background)
+void MeowPow_get_program(std::vector<char>& ptx, std::string& lowered_name, uint64_t period, uint32_t threads, int arch_major, int arch_minor, const uint64_t* dag_sizes, bool background)
 {
     if (background) {
-        background_exec([=]() { std::vector<char> tmp; std::string s; KawPow_get_program(tmp, s, period, threads, arch_major, arch_minor, dag_sizes, false); });
+        background_exec([=]() { std::vector<char> tmp; std::string s; MeowPow_get_program(tmp, s, period, threads, arch_major, arch_minor, dag_sizes, false); });
         return;
     }
 
     ptx.clear();
 
     std::string source_code(
-        #include "KawPow.h"
+        #include "MeowPow.h"
     );
 
     std::string random_math;
@@ -425,14 +426,18 @@ void KawPow_get_program(std::vector<char>& ptx, std::string& lowered_name, uint6
     const char dag_loads_include[] = "XMRIG_INCLUDE_PROGPOW_DATA_LOADS";
     source_code.replace(source_code.find(dag_loads_include), sizeof(dag_loads_include) - 1, dag_loads);
 
-    constexpr int PERIOD_LENGTH = 3;
+    constexpr int PERIOD_LENGTH = 6;
     constexpr int EPOCH_LENGTH = 7500;
 
     const uint64_t epoch = (period * PERIOD_LENGTH) / EPOCH_LENGTH;
-    const uint64_t dag_elements = dag_sizes[epoch] / 256;
+    uint64_t meowpow_epoch = epoch;
+    if (epoch >= MEOWPOW_DAG_CHANGE) {
+        meowpow_epoch = epoch * 4;
+    }
+    const uint64_t dag_elements = dag_sizes[meowpow_epoch] / 256;
 
     uint32_t r, i, s;
-    KawPow_calculate_fast_mod_data(dag_elements, r, i, s);
+    MeowPow_calculate_fast_mod_data(dag_elements, r, i, s);
 
     std::stringstream ss;
     if (i) {
@@ -455,10 +460,10 @@ void KawPow_get_program(std::vector<char>& ptx, std::string& lowered_name, uint6
     source_code.replace(source_code.find(launch_bounds_include), sizeof(launch_bounds_include) - 1, ss.str());
 
     {
-        std::lock_guard<std::mutex> g(KawPow_cache_mutex);
+        std::lock_guard<std::mutex> g(MeowPow_cache_mutex);
 
         // Check if the cache has this program
-        for (const CacheEntry& entry : KawPow_cache) {
+        for (const CacheEntry& entry : MeowPow_cache) {
             if ((entry.period == period) && (entry.arch_major == arch_major) && (entry.arch_minor == arch_minor)) {
                 ptx = entry.ptx;
                 lowered_name = entry.lowered_name;
@@ -468,5 +473,5 @@ void KawPow_get_program(std::vector<char>& ptx, std::string& lowered_name, uint6
         }
     }
 
-    KawPow_build_program(ptx, lowered_name, period, arch_major, arch_minor, source_code);
+    MeowPow_build_program(ptx, lowered_name, period, arch_major, arch_minor, source_code);
 }

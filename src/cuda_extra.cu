@@ -349,7 +349,7 @@ int cryptonight_extra_cpu_init(nvid_ctx *ctx, const xmrig_cuda::Algorithm &algor
     CUDA_CHECK(ctx->device_id, cudaDeviceSetCacheConfig(cudaFuncCachePreferShared));
 
     size_t wsize = ctx->device_blocks * ctx->device_threads;
-    if (algorithm.family() != Algorithm::KAWPOW) {
+    if (algorithm.family() != Algorithm::KAWPOW && algorithm.family() != Algorithm::MEOWPOW) {
         CUDA_CHECK(ctx->device_id, cudaMalloc(&ctx->d_ctx_state, 50 * sizeof(uint32_t) * wsize));
     }
     size_t ctx_b_size = 4 * sizeof(uint32_t) * wsize;
@@ -368,7 +368,7 @@ int cryptonight_extra_cpu_init(nvid_ctx *ctx, const xmrig_cuda::Algorithm &algor
     }
 
     CUDA_CHECK(ctx->device_id, cudaMalloc(&ctx->d_input, kMaxBlobSize));
-    if (algorithm.family() != Algorithm::KAWPOW) {
+    if (algorithm.family() != Algorithm::KAWPOW && algorithm.family() != Algorithm::MEOWPOW) {
         CUDA_CHECK(ctx->device_id, cudaMalloc(&ctx->d_result_count, sizeof(uint32_t)));
     }
     CUDA_CHECK(ctx->device_id, cudaMalloc(&ctx->d_result_nonce, 16 * sizeof (uint32_t)));
@@ -573,7 +573,7 @@ int cuda_get_deviceinfo(nvid_ctx *ctx)
         }
     }
 
-    if ((ctx->algorithm.family() == Algorithm::KAWPOW) && ((ctx->device_blocks < 0) || (ctx->device_threads < 0))) {
+    if ((ctx->algorithm.family() == Algorithm::KAWPOW || ctx->algorithm.family() == Algorithm::MEOWPOW) && ((ctx->device_blocks < 0) || (ctx->device_threads < 0))) {
         ctx->device_threads = 256;
         ctx->device_blocks = props.multiProcessorCount * 2048;
     }

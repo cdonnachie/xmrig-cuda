@@ -33,7 +33,7 @@
 #include <cstdint>
 
 
-#if defined(XMRIG_ALGO_KAWPOW) || defined(XMRIG_ALGO_CN_R)
+#if defined(XMRIG_ALGO_KAWPOW) || defined(XMRIG_ALGO_MEOWPOW) || defined(XMRIG_ALGO_CN_R)
 #   include <cuda.h>
 #endif
 
@@ -105,6 +105,25 @@ struct nvid_ctx {
     CUmodule kawpow_module              = nullptr;
     CUfunction kawpow_kernel            = nullptr;
 #   endif
+
+#   ifdef XMRIG_ALGO_MEOWPOW
+    void* meowpow_cache                  = nullptr;
+    size_t meowpow_cache_size            = 0;
+    size_t meowpow_cache_capacity        = 0;
+
+    void* meowpow_dag                    = nullptr;
+    size_t meowpow_dag_size              = 0;
+    size_t meowpow_dag_capacity          = 0;
+
+    uint32_t* meowpow_stop_host          = nullptr;
+    uint32_t* meowpow_stop_device        = nullptr;
+
+    uint32_t meowpow_period              = 0;
+
+    CUmodule meowpow_module              = nullptr;
+    CUfunction meowpow_kernel            = nullptr;
+#   endif
+
 };
 
 
@@ -132,4 +151,11 @@ void kawpow_prepare(nvid_ctx *ctx, const void* cache, size_t cache_size, const v
 void kawpow_stop_hash(nvid_ctx *ctx);
 
 namespace KawPow_Raven    { void hash(nvid_ctx *ctx, uint8_t* job_blob, uint64_t target, uint32_t *rescount, uint32_t *resnonce, uint32_t *skipped_hashes); }
+#endif
+
+#ifdef XMRIG_ALGO_MEOWPOW
+void meowpow_prepare(nvid_ctx *ctx, const void* cache, size_t cache_size, const void* dag_precalc, size_t dag_size, uint32_t height, const uint64_t* dag_sizes);
+void meowpow_stop_hash(nvid_ctx *ctx);
+
+namespace MeowPow_Meowcoin    { void hash(nvid_ctx *ctx, uint8_t* job_blob, uint64_t target, uint32_t *rescount, uint32_t *resnonce, uint32_t *skipped_hashes); }
 #endif
