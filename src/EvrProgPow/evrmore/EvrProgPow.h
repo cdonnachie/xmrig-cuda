@@ -24,11 +24,11 @@ typedef unsigned long long uint64_t;
 #endif
 
 #define PROGPOW_LANES           16
-#define PROGPOW_REGS            16
+#define PROGPOW_REGS            32
 #define PROGPOW_DAG_LOADS       4
 #define PROGPOW_CACHE_WORDS     4096
 #define PROGPOW_CNT_DAG         64
-#define PROGPOW_CNT_MATH        9
+#define PROGPOW_CNT_MATH        18
 
 typedef struct __align__(16) {uint32_t s[PROGPOW_DAG_LOADS];} dag_t;
 
@@ -75,19 +75,19 @@ __device__ __constant__ const uint32_t keccakf_rndc[24] = {
     0x0000800a, 0x8000000a, 0x80008081, 0x00008080, 0x80000001, 0x80008008
 };
 
-__device__ __constant__ const uint32_t meowcoin_rndc[15] = {
-        0x0000004D, //M
+__device__ __constant__ const uint32_t evrmore_rndc[15] = {
         0x00000045, //E
-        0x0000004F, //O
-        0x00000057, //W
-        0x00000043, //C
-        0x0000004F, //O
-        0x00000049, //I
-        0x0000004E, //N
+        0x00000056, //V
+        0x00000052, //R
         0x0000004D, //M
-        0x00000045, //E
         0x0000004F, //O
-        0x00000057, //W
+        0x00000052, //R
+        0x00000045, //E
+        0x0000002D, //-
+        0x00000050, //P
+        0x00000052, //R
+        0x0000004F, //O
+        0x00000047, //G
         0x00000050, //P
         0x0000004F, //O
         0x00000057, //W
@@ -235,9 +235,9 @@ __global__ void XMRIG_INCLUDE_LAUNCH_BOUNDS progpow_search(const dag_t *g_dag, c
         gid += state[8];
         state[8] = gid;
 
-        // 3rd apply meowcoin input constraints
+        // 3rd apply evrmore input constraints
         for (int i = 10; i < 25; i++)
-            state[i] = meowcoin_rndc[i-10];
+            state[i] = evrmore_rndc[i-10];
 
         // Run intial keccak round
         keccak_f800(state);
@@ -299,9 +299,9 @@ __global__ void XMRIG_INCLUDE_LAUNCH_BOUNDS progpow_search(const dag_t *g_dag, c
         for (int i = 8; i < 16; i++)
             state[i] = digest.uint32s[i - 8];
 
-        // 3rd apply meowcoin input constraints
+        // 3rd apply evrmore input constraints
         for (int i = 16; i < 25; i++)
-            state[i] = meowcoin_rndc[i - 16];
+            state[i] = evrmore_rndc[i - 16];
 
         // Run keccak loop
         keccak_f800(state);

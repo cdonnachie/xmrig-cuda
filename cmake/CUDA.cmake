@@ -261,6 +261,16 @@ else()
     set(CUDA_MEOWPOW_SOURCES "")
 endif()
 
+if (WITH_EVRPROGPOW AND WITH_DRIVER_API)
+    set(CUDA_EVRPROGPOW_SOURCES
+        src/EvrProgPow/evrmore/CudaEvrProgPow_gen.cpp
+        src/EvrProgPow/evrmore/CudaEvrProgPow_gen.h
+        src/EvrProgPow/evrmore/EvrProgPow.cu
+    )
+else()
+    set(CUDA_EVRPROGPOW_SOURCES "")
+endif()
+
 set(CUDA_SOURCES
     src/cryptonight.h
     src/cuda_aes.hpp
@@ -277,6 +287,7 @@ set(CUDA_SOURCES
     ${CUDA_RANDOMX_SOURCES}
     ${CUDA_KAWPOW_SOURCES}
     ${CUDA_MEOWPOW_SOURCES}
+    ${CUDA_EVRPROGPOW_SOURCES}
 )
 
 if("${CUDA_COMPILER}" STREQUAL "clang")

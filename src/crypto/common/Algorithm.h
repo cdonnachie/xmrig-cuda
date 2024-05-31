@@ -65,6 +65,7 @@ public:
         AR2_WRKZ        = 0x61120000,   // "argon2/wrkz"      Argon2id (WRKZ)
         KAWPOW_RVN      = 0x6b0f0000,   // "kawpow/rvn"       KawPow (RVN)
         MEOWPOW_MEWC    = 0x6d0f0000,   // "meowpow/mewc"     MeowPow (MEWC)
+        EVRPROGPOW_EVR  = 0x6e0f0000,   // "evrprogpow/evr"   EvrProgPow (EVR)
     };
 
     enum Family : uint32_t {
@@ -78,7 +79,8 @@ public:
         RANDOM_X        = 0x72000000,
         ARGON2          = 0x61000000,
         KAWPOW          = 0x6b000000,
-        MEOWPOW         = 0x6d000000
+        MEOWPOW         = 0x6d000000,
+        EVRPROGPOW      = 0x6e000000
     };
 
     inline Algorithm() = default;
