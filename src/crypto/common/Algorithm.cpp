@@ -57,6 +57,9 @@ xmrig_cuda::Algorithm::Id xmrig_cuda::Algorithm::parse(uint32_t id)
 #       ifdef XMRIG_ALGO_EVRPROGPOW
         EVRPROGPOW_EVR,
 #       endif
+#       ifdef XMRIG_ALGO_MERAKI
+        MERAKI_TLS,
+#       endif
     };
 
     return ids.count(id) ? static_cast<Id>(id) : INVALID;

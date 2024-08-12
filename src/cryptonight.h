@@ -33,7 +33,7 @@
 #include <cstdint>
 
 
-#if defined(XMRIG_ALGO_KAWPOW) || defined(XMRIG_ALGO_MEOWPOW) || defined(XMRIG_ALGO_EVRPROGPOW) || defined(XMRIG_ALGO_CN_R)
+#if defined(XMRIG_ALGO_KAWPOW) || defined(XMRIG_ALGO_MEOWPOW) || defined(XMRIG_ALGO_EVRPROGPOW) || defined(XMRIG_ALGO_MERAKI) || defined(XMRIG_ALGO_CN_R)
 #   include <cuda.h>
 #endif
 
@@ -142,6 +142,24 @@ struct nvid_ctx {
     CUfunction evrprogpow_kernel            = nullptr;
 #   endif
 
+#   ifdef XMRIG_ALGO_MERAKI
+    void* meraki_cache                  = nullptr;
+    size_t meraki_cache_size            = 0;
+    size_t meraki_cache_capacity        = 0;
+
+    void* meraki_dag                    = nullptr;
+    size_t meraki_dag_size              = 0;
+    size_t meraki_dag_capacity          = 0;
+
+    uint32_t* meraki_stop_host          = nullptr;
+    uint32_t* meraki_stop_device        = nullptr;
+
+    uint32_t meraki_period              = 0;
+
+    CUmodule meraki_module              = nullptr;
+    CUfunction meraki_kernel            = nullptr;
+#   endif
+
 };
 
 
@@ -183,4 +201,11 @@ void evrprogpow_prepare(nvid_ctx *ctx, const void* cache, size_t cache_size, con
 void evrprogpow_stop_hash(nvid_ctx *ctx);
 
 namespace EvrProgPow_Evrmore    { void hash(nvid_ctx *ctx, uint8_t* job_blob, uint64_t target, uint32_t *rescount, uint32_t *resnonce, uint32_t *skipped_hashes); }
+#endif
+
+#ifdef XMRIG_ALGO_MERAKI
+void meraki_prepare(nvid_ctx *ctx, const void* cache, size_t cache_size, const void* dag_precalc, size_t dag_size, uint32_t height, const uint64_t* dag_sizes);
+void meraki_stop_hash(nvid_ctx *ctx);
+
+namespace Meraki_Telestai    { void hash(nvid_ctx *ctx, uint8_t* job_blob, uint64_t target, uint32_t *rescount, uint32_t *resnonce, uint32_t *skipped_hashes); }
 #endif

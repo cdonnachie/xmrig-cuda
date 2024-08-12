@@ -271,6 +271,16 @@ else()
     set(CUDA_EVRPROGPOW_SOURCES "")
 endif()
 
+if (WITH_MERAKI AND WITH_DRIVER_API)
+    set(CUDA_MERAKI_SOURCES
+        src/Meraki/telestai/CudaMeraki_gen.cpp
+        src/Meraki/telestai/CudaMeraki_gen.h
+        src/Meraki/telestai/Meraki.cu
+    )
+else()
+    set(CUDA_MERAKI_SOURCES "")
+endif()
+
 set(CUDA_SOURCES
     src/cryptonight.h
     src/cuda_aes.hpp
@@ -288,6 +298,7 @@ set(CUDA_SOURCES
     ${CUDA_KAWPOW_SOURCES}
     ${CUDA_MEOWPOW_SOURCES}
     ${CUDA_EVRPROGPOW_SOURCES}
+    ${CUDA_MERAKI_SOURCES}
 )
 
 if("${CUDA_COMPILER}" STREQUAL "clang")
